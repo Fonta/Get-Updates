@@ -1,0 +1,8 @@
+{
+    "Name" : "Windows Server 2016",
+    "WindowsVersion" : "Windows10",
+    "Version" : "1607",
+    "Build" : "14393",
+    "StackUpdatesPath" : "E:\\Patching\\Updates\\W2K16\\Stack",
+    "CumulativeUpdatesPath" : "E:\\Patching\\Updates\\W2K16\\Cumulative"
+}
