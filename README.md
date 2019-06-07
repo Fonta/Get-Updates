@@ -34,3 +34,4 @@ This script uses the LatestUpdate module made by Aaron Parker. Make sure you ins
 - https://www.powershellgallery.com/packages/latestupdate/
 
 ## Screenshot
+![Screenshot](https://i.imgur.com/BIZU6CS.png)
