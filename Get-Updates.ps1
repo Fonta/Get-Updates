@@ -34,21 +34,24 @@ if (-not (Get-Module -Name "LatestUpdate")) {
 $OSConfigFiles = Get-ChildItem -Path "$PSScriptRoot\OSConfigs" | Where-Object { $_.Name -like "*.json" } 
 
 foreach ($OSConfigFile in $OSConfigFiles) {
-    $NoCleanUp = @()
     $OSInfo = (Get-Content $OSConfigFile.FullName) -Join "`n" | ConvertFrom-Json
+    $downloadLocations = @()
+    $updates2Keep = @()
 
     Write-Output ""
-    Write-Log "###################################################### $($OSInfo.Name) ######################################################" -NoTime
+    Write-Log "############### $($OSInfo.Name) #############################################################################################" -NoTime
     Write-Log "*** Gathering information about the latest updates ***" -NoTime
 
     if ($OSInfo.StackUpdatePath) {
         Write-Log "Getting latest Stack update... " -NoNewLine
         $LatestStack = Get-LatestServicingStackUpdate -Version $OSInfo.Version | Where-Object {$_.Note -match $OSInfo.Name}
-        $NoCleanUp += $LatestStack.Note
 
         if ($LatestStack) {
             Write-Log "OK!" -NoTime -ForegroundColor "Green"
             Write-Log "Latest stack update is: $($LatestStack.Note)"
+
+            $downloadLocations += $OSInfo.StackUpdatePath
+            $updates2Keep += $LatestStack.Note
         }
         else {
             Write-Log "Failed!" -NoTime -ForegroundColor "Red"
@@ -58,11 +61,13 @@ foreach ($OSConfigFile in $OSConfigFiles) {
     if ($OSInfo.CumulativeUpdatePath) {
         Write-Log "Getting latest Cumulative update... " -NoNewLine
         $LatestCumulativeUpdate = Get-LatestCumulativeUpdate -Version $OSInfo.Version | Where-Object {$_.Note -match $OSInfo.Name -and $_.Note -like "*Cumulative*"}
-        $NoCleanUp += $LatestCumulativeUpdate.Note
 
         if ($LatestCumulativeUpdate) {
             Write-Log "OK!" -NoTime -ForegroundColor "Green"
             Write-Log "Latest Cumulative update is: $($LatestCumulativeUpdate.Note)"
+
+            $downloadLocations += $OSInfo.CumulativeUpdatePath
+            $updates2Keep += $LatestCumulativeUpdate.Note
         }
         else {
             Write-Log "Failed!" -NoTime -ForegroundColor "Red"
@@ -70,15 +75,18 @@ foreach ($OSConfigFile in $OSConfigFiles) {
     }
 
     if ($OSInfo.AdditionalUpdatesPath) {
+        $downloadLocations += $OSInfo.AdditionalUpdatesPath
+
         foreach ($AddUpdate in $OSInfo.AdditionalUpdates) {
             if ($AddUpdate -match ".net") {
                 Write-Log "Getting latest .NET Framework update... " -NoNewLine
                 $LastNETFW = Get-LatestNetFrameworkUpdate | Where-Object {$_.Note -match $OSInfo.Name -and $_.Note -match $AddUpdate}
-                $NoCleanUp += $LastNETFW.Note
 
                 if ($LastNETFW) {
                     Write-Log "OK!" -NoTime -ForegroundColor "Green"
                     Write-Log "Latest .NET update is: $($LastNETFW.Note)"
+
+                    $updates2Keep += $LastNETFW.Note
                 }
                 else {
                     Write-Log "Failed!" -NoTime -ForegroundColor "Red"
@@ -88,11 +96,12 @@ foreach ($OSConfigFile in $OSConfigFiles) {
             if ($AddUpdate -match "Flash") {
                 Write-Log "Getting latest Flash update... " -NoNewLine
                 $LatestFlash = Get-LatestAdobeFlashUpdate | Where-Object {$_.Note -match $OSInfo.Name}
-                $NoCleanUp += $LatestFlash.Note
 
                 if ($LatestFlash) {
                     Write-Log "OK!" -NoTime -ForegroundColor "Green"
                     Write-Log "Latest Flash is: $($LatestFlash.Note)"
+
+                    $updates2Keep += $LatestFlash.Note
                 }
                 else {
                     Write-Log "Failed!" -NoTime -ForegroundColor "Red"
@@ -103,27 +112,37 @@ foreach ($OSConfigFile in $OSConfigFiles) {
 
     Write-Output ""
     Write-Log "*** Information gathered, download the updates ***" -NoTime
+    Write-Log "Cleaning up any old updates from the download destinations... " -NoNewLine
+    $clearResult = Clear-DownloadLocations -Locations $downloadLocations -Keep $updates2Keep
+    if ($clearResult) {
+        Write-Log "OK!" -NoTime -ForegroundColor "Green"
+    }
+    else {
+        Write-Log "Failed!" -NoTime -ForegroundColor "Red"
+    }
 
     if ($LatestStack) {
-        Write-Log "Processing Stack update..."
-        $duration = Measure-Command -Expression { Save-Update -Update $LatestStack -Path $OSInfo.StackUpdatePath -Force:$($Force.IsPresent) -UseProxy:$($UseProxy.IsPresent) -Clean -DontClean $NoCleanUp }
-        Write-Log "Duration of download was: $($duration.TotalSeconds) seconds."
+        Write-Log "Downloading Stack update... " -NoNewLine
+        $downloadDuration = Measure-Command -Expression { Save-Update -Update $LatestStack -Path $OSInfo.StackUpdatePath -Force:$($Force.IsPresent) -UseProxy:$($UseProxy.IsPresent) }
+        Write-Log "Duration of download was: $($downloadDuration.TotalSeconds) seconds."
     }
 
     if ($LatestCumulativeUpdate) {
-        Write-Log "Processing Cumulative update..."
-        $duration = Measure-Command -Expression { Save-Update -Update $LatestCumulativeUpdate -Path $OSInfo.CumulativeUpdatePath -Force:$($Force.IsPresent) -UseProxy:$($UseProxy.IsPresent) -Clean -DontClean $NoCleanUp }
-        Write-Log "Duration of download was: $($duration.TotalSeconds) seconds."
+        Write-Log "Downloading Cumulative update... " -NoNewLine
+        $downloadDuration = Measure-Command -Expression { Save-Update -Update $LatestCumulativeUpdate -Path $OSInfo.CumulativeUpdatePath -Force:$($Force.IsPresent) -UseProxy:$($UseProxy.IsPresent) }
+        Write-Log "Duration of download was: $($downloadDuration.TotalSeconds) seconds."
     }
 
     if ($LastNETFW) {
-        Write-Log "Processing .NET Framework update..."
-        Save-Update -Update $LastNETFW -Path $OSInfo.AdditionalUpdatesPath -Force:$($Force.IsPresent) -UseProxy:$($UseProxy.IsPresent) -Clean -DontClean $NoCleanUp
+        Write-Log "Downloading .NET Framework update... " -NoNewLine
+        $downloadDuration = Measure-Command -Expression { Save-Update -Update $LastNETFW -Path $OSInfo.AdditionalUpdatesPath -Force:$($Force.IsPresent) -UseProxy:$($UseProxy.IsPresent) }
+        Write-Log "Duration of download was: $($downloadDuration.TotalSeconds) seconds."
     }
 
     if ($LatestFlash) {
-        Write-Log "Processing Adobe Flash update..."
-        Save-Update -Update $LatestFlash -Path $OSInfo.AdditionalUpdatesPath -Force:$($Force.IsPresent) -UseProxy:$($UseProxy.IsPresent) -Clean -DontClean $NoCleanUp
+        Write-Log "Downloading Adobe Flash update... " -NoNewLine
+        $downloadDuration = Measure-Command -Expression { Save-Update -Update $LatestFlash -Path $OSInfo.AdditionalUpdatesPath -Force:$($Force.IsPresent) -UseProxy:$($UseProxy.IsPresent) }
+        Write-Log "Duration of download was: $($downloadDuration.TotalSeconds) seconds."
     }
 
     Write-Log "#################################################################################################################################" -NoTime

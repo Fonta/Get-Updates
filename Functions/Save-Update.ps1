@@ -10,12 +10,6 @@ function Save-Update {
         [switch] $UseProxy,
 
         [Parameter(Mandatory = $false)]
-        [Array] $DontClean,
-
-        [Parameter(Mandatory = $false)]
-        [switch] $Clean,
-
-        [Parameter(Mandatory = $false)]
         [switch] $Force
     )
 
@@ -23,23 +17,17 @@ function Save-Update {
     $Overwrite = $false
     $SavePath = Join-Path -Path $Path -ChildPath $Update.Note
 
-    if ($Clean.IsPresent) {
-        Write-Log "Cleaning up download destination location ($Path)"
-        if (Test-Path -Path $Path -ErrorAction SilentlyContinue) {
-            $itemsToRemove = Get-ChildItem -Path $Path | Where-Object {$_.PSIsContainer -and ($DontClean -notcontains $_.Name)}
-            $itemsToRemove | Remove-Item -Force -Recurse
-        }
-    }
-
     $SavePathExists = Test-Path -Path $SavePath
     if ($SavePathExists -and (-not $Force.IsPresent)) {
-        Write-Log "Update already seems to exist. Force param NOT defined. " -NoNewLine
+        # Write-Log "Warning! " -ForegroundColor "Yellow"
+        Write-Log "Update already seems to exist. Force param NOT defined. " -NoNewLine -NoTime
         Write-Log "Skipping." -NoTime -ForegroundColor "Yellow"
         $Download = $false
     }
     if ($SavePathExists -and $Force.IsPresent) {
-        Write-Log "Update already seems to exist. Force param defined. " -NoNewLine
-        Write-Log "Overwriting." -NoTime -ForegroundColor "Yellow"
+        # Write-Log "Warning! " -ForegroundColor "Yellow"
+        Write-Log "Update already seems to exist. Force param defined. " -NoNewLine -NoTime
+        Write-Log "Overwriting... " -NoNewLine -NoTime -ForegroundColor "Yellow"
         $Overwrite = $true
     }
     if (-not $SavePathExists) {
@@ -56,8 +44,6 @@ function Save-Update {
         if ($UseProxy.IsPresent) {
             $SaveParams.Proxy = "url.toproxy.com:8080"
         }
-
-        Write-Log "Downloading update... " -NoNewLine
 
         $SaveResult = $Update | Save-LatestUpdate @SaveParams
 
