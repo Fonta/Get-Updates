@@ -1,11 +1,9 @@
 {
     "Name" : "Windows Server 2019",
-    "WindowsVersion" : "Windows10",
     "Version" : "1809",
-    "Build" : "17763",
-    "StackUpdatesPath" : "E:\\Patching\\Updates\\W2K19\\Stack",
-    "CumulativeUpdatesPath" : "E:\\Patching\\Updates\\W2K19\\Cumulative",
-    "AdditionalUpdatesPath": "E:\\Patching\\Updates\\W2K19\\Additional",
+    "StackUpdatePath" : "C:\\Temp\\W2K19\\Stack",
+    "CumulativeUpdatePath" : "C:\\Temp\\W2K19\\Cumulative",
+    "AdditionalUpdatesPath": "C:\\Temp\\W2K19\\Additional",
     "AdditionalUpdates" : [
         ".NET Framework 3.5 and 4.7.2",
         "Adobe Flash Player"
