@@ -39,7 +39,7 @@ foreach ($OSConfigFile in $OSConfigFiles) {
     $updates2Keep = @()
 
     Write-Output ""
-    Write-Log "############### $($OSInfo.Name) #############################################################################################" -NoTime
+    Write-Log "############### $($OSInfo.Name) ####################################################################################" -NoTime
     Write-Log "*** Gathering information about the latest updates ***" -NoTime
 
     if ($OSInfo.StackUpdatePath) {
@@ -145,5 +145,5 @@ foreach ($OSConfigFile in $OSConfigFiles) {
         Write-Log "Duration of download was: $($downloadDuration.TotalSeconds) seconds."
     }
 
-    Write-Log "#################################################################################################################################" -NoTime
+    Write-Log "########################################################################################################################" -NoTime
 }
