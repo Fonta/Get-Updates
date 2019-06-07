@@ -23,6 +23,11 @@ Here's an example json file for Windows Server 2019:
 }
 ```
 
+If you already downloaded the updates, but for some reason would like to download them again and overwrite the existing files, start the script with the `-Force` parameter.
+
+## Logging
+Logs will be written to a folder named "Logs" in the root folder of the script.
+
 ## Requirements
 This script uses the LatestUpdate module made by Aaron Parker. Make sure you install this module, or include it in the Modules folder of this script.
 - https://github.com/aaronparker/LatestUpdate
