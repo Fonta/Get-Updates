@@ -1,5 +1,5 @@
 function Save-Update {
-    param (
+    Param (
         [Parameter(Mandatory = $true)]
         [Array] $Update,
 
@@ -13,40 +13,48 @@ function Save-Update {
         [switch] $Force
     )
 
-    $Download = $true
-    $Overwrite = $false
-    $SavePath = Join-Path -Path $Path -ChildPath $Update.Note
+    Begin {
+        $ScriptParentFolder = (Get-Item -Path $PSScriptRoot).Parent
+        $ConfigFile = Join-Path -Path $ScriptParentFolder -ChildPath "Config.json"
+        $Config = (Get-Content -Path $ConfigFile) -join "`n" | ConvertFrom-Json
 
-    $SavePathExists = Test-Path -Path $SavePath
-    if ($SavePathExists -and (-not $Force.IsPresent)) {
-        # Write-Log "Warning! " -ForegroundColor "Yellow"
-        Write-Log "Update already seems to exist. Force param NOT defined. " -NoNewLine -NoTime
-        Write-Log "Skipping." -NoTime -ForegroundColor "Yellow"
-        $Download = $false
-    }
-    if ($SavePathExists -and $Force.IsPresent) {
-        # Write-Log "Warning! " -ForegroundColor "Yellow"
-        Write-Log "Update already seems to exist. Force param defined. " -NoNewLine -NoTime
-        Write-Log "Overwriting... " -NoNewLine -NoTime -ForegroundColor "Yellow"
-        $Overwrite = $true
-    }
-    if (-not $SavePathExists) {
-        $null = New-Item -Path $SavePath -ItemType Directory
-    }
-
-    if ($Download) {
-        $SaveParams = @{
-            Path = $SavePath
-            Force = $Overwrite
-            # Verbose = $true
+        $Download = $true
+        $Overwrite = $false
+        $SavePath = Join-Path -Path $Path -ChildPath $Update.Note
+    
+        $SavePathExists = Test-Path -Path $SavePath
+        if ($SavePathExists -and (-not $Force.IsPresent)) {
+            Write-Log "Update already seems to exist. Force param NOT defined. " -NoNewLine -NoTime
+            Write-Log "Skipping." -NoTime -ForegroundColor "Yellow"
+            $Download = $false
         }
-
-        if ($UseProxy.IsPresent) {
-            $SaveParams.Proxy = "url.toproxy.com:8080"
+        if ($SavePathExists -and $Force.IsPresent) {
+            Write-Log "Update already seems to exist. Force param defined. " -NoNewLine -NoTime
+            Write-Log "Overwriting... " -NoNewLine -NoTime -ForegroundColor "Yellow"
+            $Overwrite = $true
         }
+        if (-not $SavePathExists) {
+            $null = New-Item -Path $SavePath -ItemType Directory
+        }
+    }
 
-        $SaveResult = $Update | Save-LatestUpdate @SaveParams
+    Process {
+        if ($Download) {
+            $SaveParams = @{
+                Path  = $SavePath
+                Force = $Overwrite
+                # Verbose = $true
+            }
+    
+            if ($UseProxy.IsPresent) {
+                $SaveParams.Proxy = "$($Config.ProxyUrl):$($Config.ProxyPort)"
+            }
 
+            $SaveResult = $Update | Save-LatestUpdate @SaveParams
+        }
+    }
+
+    End {
         if ($SaveResult) {
             Write-Log "OK!" -NoTime -ForegroundColor "Green"
             Write-Log "Update successfully downloaded to $($SaveResult.Target)"
@@ -54,6 +62,5 @@ function Save-Update {
         else {
             Write-Log "Failed!" -NoTime -ForegroundColor "Red"
         }
-
     }
 }
