@@ -16,6 +16,7 @@ function Save-Update {
     Begin {
         $ScriptParentFolder = (Get-Item -Path $PSScriptRoot).Parent
         $ConfigFile = Join-Path -Path $ScriptParentFolder -ChildPath "Config.json"
+        
         if (Test-Path -Path $ConfigFile -PathType Leaf -ErrorAction SilentlyContinue) {
             $Config = (Get-Content -Path $ConfigFile) -join "`n" | ConvertFrom-Json
         }        
