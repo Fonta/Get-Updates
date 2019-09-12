@@ -4,7 +4,7 @@
 
 This script is used to download the latest updates from the Microsoft Updates Catalog. These downloaded updates can then be imported into MDT or applied directly to a WIM, to speed up the installation process of a machine.
 
-Repo: <https://github.com/f0nt4/Get-Updates>
+Repo: <https://github.com/fonta/Get-Updates>
 
 ## Usage
 
